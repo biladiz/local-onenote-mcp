@@ -8,6 +8,15 @@ __pycache__/
 *.pyo
 *.pyd
 
+# Testing and coverage
+.pytest_cache/
+.coverage
+htmlcov/
+*.egg-info/
+dist/
+build/
+ci-check.ps1
+
 # Generated MCP config (contains local machine paths)
 mcp_config_sample.json
 
