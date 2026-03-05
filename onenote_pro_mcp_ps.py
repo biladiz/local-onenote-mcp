@@ -161,13 +161,19 @@ def read_page(page_id: str) -> str:
 
 @mcp.tool()
 def export_page_as_text(page_id: str) -> str:
-    """Export a page as clean plain text — HTML tags and entities stripped. Best for AI consumption."""
+    """Export a page as clean plain text — HTML tags and entities stripped.
+    
+    Best for AI consumption.
+    """
     return run_command("exporttext", p1=page_id)
 
 
 @mcp.tool()
 def get_page_metadata(page_id: str) -> str:
-    """Return structured metadata for a page: name, section, notebook, and lastModified timestamp."""
+    """Return structured metadata for a page.
+    
+    Includes name, section, notebook, and lastModified timestamp.
+    """
     return run_command("pagemetadata", p1=page_id)
 
 
