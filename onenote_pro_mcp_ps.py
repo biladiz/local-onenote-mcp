@@ -64,9 +64,7 @@ def _start_process() -> "subprocess.Popen[str]":
                 return proc
         except json.JSONDecodeError:
             continue  # skip non-JSON startup noise
-    raise RuntimeError(
-        "PowerShell bridge did not send ready signal. Is OneNote Desktop running?"
-    )
+    raise RuntimeError("PowerShell bridge did not send ready signal. Is OneNote Desktop running?")
 
 
 def _get_process() -> "subprocess.Popen[str]":
