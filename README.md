@@ -1,33 +1,44 @@
 # 📓 Local OneNote MCP Server (COM-based)
 
-A Model Context Protocol (MCP) server that interacts with your **local Microsoft OneNote Desktop application** via the COM interface. This server is designed to work exclusively with **local OneNote files** (notebooks stored on your hard drive) and does not require cloud permissions or Microsoft Graph API access.
+![Python](https://img.shields.io/badge/python-3.10%2B-blue)
+![Platform](https://img.shields.io/badge/platform-Windows-lightgrey)
+![License](https://img.shields.io/badge/license-MIT-green)
+![CI](https://github.com/biladiz/local-onenote-mcp/actions/workflows/ci.yml/badge.svg)
+
+A [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) server that interacts with your **local Microsoft OneNote Desktop application** via the Windows COM interface. Works exclusively with **local OneNote files** — no cloud permissions or Microsoft Graph API required.
 
 ## Features
 
 | Tool | Description |
 |------|-------------|
 | `list_notebooks` | List all open local OneNote notebooks |
-| `get_notebook` | Get details about a specific notebook |
+| `get_notebook` | Get name and ID of a specific notebook |
 | `list_sections` | List all sections in a notebook |
+| `list_pages` | List all pages (with IDs) in a section |
 | `read_notebook` | Read all content from a notebook |
-| `read_page` | Read content from a specific page by ID |
-| `search_pages` | Search across all notebooks |
+| `read_page` | Read text content of a page by ID |
+| `export_page_as_text` | Export a page as clean plain text (HTML stripped) |
+| `get_page_metadata` | Get name, section, notebook, and last-modified of a page |
+| `search_pages` | Search across all local notebooks |
 | `get_last_updated_page` | Find the most recently modified page |
+| `get_last_updated_pages` | Find the N most recently modified items |
+| `create_section` | Create a new section in a notebook |
 | `create_page` | Create a new page in a section |
+| `update_page` | Append or replace content on an existing page |
 
 ## Requirements
 
-- **Windows** (Required for COM automation)
-- **Microsoft OneNote Desktop App** (The classic version, e.g., OneNote 2016/2019/365 Desktop)
-- **Local Notebooks** (Notebooks stored on the local filesystem. OneDrive-only notebooks are excluded)
+- **Windows** (Required — COM automation is Windows-only)
+- **Microsoft OneNote Desktop** (2016 / 2019 / 365 Desktop, **not** the UWP Store app)
+- **Local Notebooks** (stored on the local filesystem; OneDrive-only notebooks are excluded)
 - **Python 3.10+**
 
 ## Quick Start
 
-### 1. Clone or copy this directory
+### 1. Clone the repo
 
 ```bash
-git clone https://github.com/biladiz/local-onenote-mcp local-onenote-mcp
+git clone https://github.com/biladiz/local-onenote-mcp
 cd local-onenote-mcp
 ```
 
@@ -40,62 +51,68 @@ install.bat
 
 **Windows (Git Bash):**
 ```bash
-chmod +x install.sh
-./install.sh
+chmod +x install.sh && ./install.sh
 ```
 
-The installer will:
-- ✅ Verify Python 3.10+ is installed
-- ✅ Create a `.venv` virtual environment
-- ✅ Install all dependencies (`fastmcp`)
-- ✅ Generate a `mcp_config_sample.json` with paths tailored to your system
+The installer:
+- ✅ Verifies Python 3.10+
+- ✅ Creates a `.venv` virtual environment
+- ✅ Installs `fastmcp`
+- ✅ Generates `mcp_config_sample.json` with your local paths
 
 ### 3. Add to your MCP client
 
-Copy the contents of the generated `mcp_config_sample.json` into your MCP client's configuration file. For example, for Gemini Antigravity:
+Merge the generated `mcp_config_sample.json` into your client config. For **Gemini Antigravity**:
 
 ```
 ~/.gemini/antigravity/mcp_config.json
 ```
 
-Merge the `"local-onenote-mcp"` entry into the existing `"mcpServers"` object.
+Add the `"local-onenote-mcp"` entry inside the existing `"mcpServers"` object.
 
 ### 4. Restart your MCP client
 
-Restart your AI agent / MCP client so it picks up the new server.
+OneNote Desktop must be **open** before starting the MCP client.
+
+## How It Works
+
+```
+MCP Client ──stdio──▸ onenote_pro_mcp_ps.py ──stdin/stdout JSON──▸ onenote_bridge.ps1 [-Loop] ──COM──▸ OneNote
+```
+
+1. The MCP server starts the PowerShell bridge **once** at startup (`-Loop` mode).
+2. Every tool call sends a JSON command over stdin and reads a JSON response from stdout — no per-call subprocess spawning.
+3. The PowerShell bridge uses the **OneNote COM API** and only exposes local notebooks.
 
 ## Project Structure
 
 ```
 local-onenote-mcp/
-├── onenote_pro_mcp_ps.py   # MCP server (Python + FastMCP)
-├── onenote_bridge.ps1      # PowerShell bridge to OneNote COM API
-├── requirements.txt        # Python dependencies
-├── install.bat             # Windows installer
-├── install.sh              # Bash installer (Git Bash)
-├── mcp_config_sample.json  # Generated after install — ready to paste
-└── README.md               # This file
+├── onenote_pro_mcp_ps.py       # MCP server (FastMCP + persistent subprocess manager)
+├── onenote_bridge.ps1          # PowerShell bridge (OneNote COM, JSON I/O, loop mode)
+├── requirements.txt            # Python dependencies (pinned)
+├── install.bat                 # Windows installer
+├── install.sh                  # Git Bash installer
+├── CONTRIBUTING.md             # Contributor guide
+├── .github/workflows/ci.yml    # GitHub Actions (ruff + PSScriptAnalyzer)
+├── mcp_config_sample.json      # Generated after install — paste into your MCP config
+└── README.md                   # This file
 ```
-
-## How It Works
-
-```
-MCP Client ──stdio──▸ onenote_pro_mcp_ps.py ──subprocess──▸ onenote_bridge.ps1 ──COM──▸ OneNote
-```
-
-1. The MCP client connects to the Python server via **stdio**.
-2. Each tool call runs a PowerShell subprocess with the appropriate command.
-3. The PowerShell script uses the **OneNote COM API** to interact with local notebooks only.
 
 ## Troubleshooting
 
 | Problem | Solution |
 |---------|----------|
-| `OneNote.Application` COM error | Make sure OneNote desktop is open |
-| Python not found | Install Python 3.10+ and add to PATH |
-| Permission error on `.ps1` | The installer uses `-ExecutionPolicy Bypass` |
+| `OneNote.Application` COM error | Open OneNote Desktop before starting the MCP client |
+| `Bridge did not send ready signal` | OneNote is not running or COM is blocked — open OneNote first |
+| Python not found | Install Python 3.10+ and check "Add to PATH" |
+| Permission error on `.ps1` | Installer uses `-ExecutionPolicy Bypass` — run install again |
 | Tools return empty results | Ensure notebooks are local files (not OneDrive-only) and open |
-| Cloud notebook missing | This tool intentionally excludes `https://` based notebooks |
+| Cloud notebook not visible | Intentional — this server only exposes local/file-based notebooks |
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for dev setup, architecture notes, and how to add new tools.
 
 ## License
 
