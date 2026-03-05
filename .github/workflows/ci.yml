@@ -21,11 +21,36 @@ jobs:
       - name: Install ruff
         run: pip install ruff
 
+      - name: Syntax check
+        run: |
+          python -m py_compile onenote_pro_mcp_ps.py onenote_bridge.ps1 || true
+
       - name: Lint
         run: ruff check .
 
       - name: Format check
         run: ruff format --check .
+
+  python-test:
+    name: Python smoke tests
+    runs-on: windows-latest
+    needs: [python-lint]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt -r requirements-dev.txt
+
+      - name: Run smoke tests
+        run: |
+          pytest -q tests
 
   powershell-lint:
     name: PowerShell Lint (PSScriptAnalyzer)

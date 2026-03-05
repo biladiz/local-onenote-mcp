@@ -7,11 +7,20 @@ running as a single persistent subprocess in loop mode.
 import json
 import os
 import subprocess
+import sys
 import threading
+
+# immediately abort on unsupported platforms to avoid confusing COM errors
+if sys.platform != "win32":
+    # the MCP protocol itself will run on any OS, but the bridge requires Windows
+    sys.stderr.write("Error: local-onenote-mcp only runs on Windows.\n")
+    sys.exit(1)
 
 from fastmcp import FastMCP
 
 # ── FastMCP instance ────────────────────────────────────────────────────
+
+__version__ = "0.1.0"
 
 mcp = FastMCP("local-onenote-mcp")
 

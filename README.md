@@ -101,6 +101,11 @@ local-onenote-mcp/
 
 ## Troubleshooting
 
+> **Note:** A lightweight automated smoke test suite runs on each PR to catch
+> syntax errors and ensure the Python code loads correctly. This keeps the
+> project reusable and secure without adding heavy infrastructure.
+
+
 | Problem | Solution |
 |---------|----------|
 | `OneNote.Application` COM error | Open OneNote Desktop before starting the MCP client |

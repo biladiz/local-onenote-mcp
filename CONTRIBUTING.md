@@ -1,8 +1,13 @@
 # Contributing to local-onenote-mcp
 
+> **Project philosophy:** This repository is intentionally a tiny, focused MCP server. Keep changes lightweight, avoid adding unnecessary dependencies, and prefer minimal implementations with clear benefits. When proposing improvements, ask "Does this keep the server simple and stable?" before proceeding.
+
+
 Thanks for your interest in contributing! This guide will get you set up quickly.
 
 ## Prerequisites
+
+(This list is intentionally short; the goal is a low barrier to entry.)
 
 - Windows 10/11
 - Microsoft OneNote Desktop (2016 / 2019 / 365) **open and running**
@@ -16,6 +21,8 @@ git clone https://github.com/biladiz/local-onenote-mcp
 cd local-onenote-mcp
 python -m venv .venv
 .venv\Scripts\pip install -r requirements.txt
+# optional dev deps for tests/lint
+.venv\Scripts\pip install -r requirements-dev.txt
 ```
 
 ## Project Layout
