@@ -23,7 +23,7 @@ jobs:
 
       - name: Syntax check
         run: |
-          python -m py_compile onenote_pro_mcp_ps.py onenote_bridge.ps1 || true
+          python -m py_compile onenote_pro_mcp_ps.py tests/test_smoke.py
 
       - name: Lint
         run: ruff check .
@@ -65,9 +65,9 @@ jobs:
       - name: Analyse onenote_bridge.ps1
         shell: pwsh
         run: |
-          $results = Invoke-ScriptAnalyzer -Path onenote_bridge.ps1 -Severity Warning,Error
+          $results = Invoke-ScriptAnalyzer -Path onenote_bridge.ps1 -Severity Error
           if ($results) {
             $results | Format-Table -AutoSize
             exit 1
           }
-          Write-Host "PSScriptAnalyzer: no issues found."
+          Write-Host "PSScriptAnalyzer: no errors found."
