@@ -2,6 +2,8 @@
 Local OneNote MCP Server (COM-based)
 Talks to OneNote exclusively via the PowerShell bridge (onenote_bridge.ps1)
 running as a single persistent subprocess in loop mode.
+
+Only runs on Windows (COM automation is Windows-only).
 """
 
 import json
@@ -10,24 +12,23 @@ import subprocess
 import sys
 import threading
 
-# immediately abort on unsupported platforms to avoid confusing COM errors
+# Immediately abort on unsupported platforms to avoid confusing COM errors
 if sys.platform != "win32":
-    # the MCP protocol itself will run on any OS, but the bridge requires Windows
     sys.stderr.write("Error: local-onenote-mcp only runs on Windows.\n")
     sys.exit(1)
 
-from fastmcp import FastMCP
+from fastmcp import FastMCP  # noqa: E402
 
-# ── FastMCP instance ────────────────────────────────────────────────────
+# ── FastMCP instance ───────────────────────────────────────────────────────
 
 __version__ = "0.1.0"
 
 mcp = FastMCP("local-onenote-mcp")
 
-SCRIPT_DIR  = os.path.dirname(os.path.abspath(__file__))
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 SCRIPT_PATH = os.path.join(SCRIPT_DIR, "onenote_bridge.ps1")
 
-# ── Persistent PS subprocess manager ──────────────────────────────────────────
+# ── Persistent PS subprocess manager ──────────────────────────────────────
 
 _process: "subprocess.Popen[str] | None" = None
 _lock = threading.Lock()
@@ -38,8 +39,10 @@ def _start_process() -> "subprocess.Popen[str]":
     proc = subprocess.Popen(
         [
             "powershell",
-            "-ExecutionPolicy", "Bypass",
-            "-File", SCRIPT_PATH,
+            "-ExecutionPolicy",
+            "Bypass",
+            "-File",
+            SCRIPT_PATH,
             "-Loop",
         ],
         stdin=subprocess.PIPE,
@@ -61,7 +64,9 @@ def _start_process() -> "subprocess.Popen[str]":
                 return proc
         except json.JSONDecodeError:
             continue  # skip non-JSON startup noise
-    raise RuntimeError("PowerShell bridge did not send ready signal. Is OneNote Desktop running?")
+    raise RuntimeError(
+        "PowerShell bridge did not send ready signal. Is OneNote Desktop running?"
+    )
 
 
 def _get_process() -> "subprocess.Popen[str]":
@@ -115,7 +120,8 @@ def run_command(cmd: str, p1: str = "", p2: str = "", p3: str = "") -> str:
             return f"Error: {exc}"
 
 
-# ── MCP Tools ────────────────────────────────────────────────────────────
+# ── MCP Tools ──────────────────────────────────────────────────────────────
+
 
 @mcp.tool()
 def list_notebooks() -> str:
@@ -212,7 +218,7 @@ def update_page(page_id: str, content: str, mode: str = "append") -> str:
     return run_command("updatepage", p1=page_id, p2=content, p3=mode)
 
 
-# ── Entrypoint ──────────────────────────────────────────────────────────────
+# ── Entrypoint ─────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
     mcp.run(transport="stdio")

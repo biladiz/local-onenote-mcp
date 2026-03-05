@@ -1,9 +1,11 @@
+import importlib
 import sys
 
 import pytest
 
-# simple smoke test verifying the server module loads and exposes expected
-# attributes. This does not depend on OneNote being installed.
+# Simple smoke tests verifying the server module loads and exposes expected
+# attributes. These do not depend on OneNote being installed.
+
 
 def test_import_module():
     import onenote_pro_mcp_ps
@@ -13,10 +15,8 @@ def test_import_module():
 
 
 def test_platform_check(monkeypatch, capsys):
-    # simulate non-Windows environment by temporarily changing sys.platform
+    """Simulate a non-Windows environment and verify the platform guard fires."""
     monkeypatch.setattr(sys, "platform", "linux")
-    # re-import the module in a new namespace to run platform guard
-    import importlib
     with pytest.raises(SystemExit) as excinfo:
         importlib.reload(importlib.import_module("onenote_pro_mcp_ps"))
     assert excinfo.value.code == 1
